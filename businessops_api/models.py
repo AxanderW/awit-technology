@@ -12,6 +12,7 @@ class Category(models.Model):
 
     class Meta:
         ordering = ['name',]
+        verbose_name_plural = 'categories'
 
     def __str__(self):
         """ Return string representation of model"""
@@ -28,6 +29,30 @@ class TransCategory(models.Model):
 
     class Meta:
         ordering = ['name',]
+        verbose_name_plural = 'transcategories'
+
+    def __str__(self):
+        """ Return string representation of model"""
+        return self.name
+
+class Company(models.Model):
+    """Database model for companies"""
+    comp_id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=255,unique=True)
+    email = models.EmailField(max_length=255,unique=True)
+    address_1 = models.TextField()
+    address_2 = models.TextField(null=True, blank=True)
+    city = models.CharField(max_length=1024)
+    state = models.CharField(max_length=2)
+    zipcode = models.CharField(max_length=12)
+    country = models.CharField(max_length=3,default='usa')
+    phone = models.CharField(max_length=12)
+    created_on = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
+    
+
+    class Meta:
+        ordering = ['name',]
 
     def __str__(self):
         """ Return string representation of model"""
@@ -37,6 +62,31 @@ class TransCategory(models.Model):
 class Department(models.Model):
     """Database model for departments"""
     dept_id = models.AutoField(primary_key=True)
+    comp_id = models.ForeignKey(
+        Company,
+        on_delete = models.CASCADE,
+        null=True
+    )
+    name = models.CharField(max_length=100, unique=True)
+    description = models.TextField()
+    created_on = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['name',]
+
+    def __str__(self):
+        """ Return string representation of model"""
+        return self.name
+
+class EmpDepartment(models.Model):
+    """Database model for departments"""
+    emp_dept_id = models.AutoField(primary_key=True)
+    comp_id = models.ForeignKey(
+        Company,
+        on_delete = models.CASCADE,
+        null=True
+    )
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField()
     created_on = models.DateTimeField(auto_now_add=True)
@@ -53,11 +103,6 @@ class Department(models.Model):
 
 class Person(models.Model):
     """Database model for persons"""
-    prsn_id = models.AutoField(primary_key=True)
-    cat_id = models.ForeignKey(
-        Category,
-        on_delete = models.CASCADE,
-    )
     fname = models.CharField(max_length=255)
     lname = models.CharField(max_length=255)
     dob = models.DateField()
@@ -72,24 +117,27 @@ class Person(models.Model):
     created_on = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
     
-
     class Meta:
-        ordering = ['lname','fname',]
+        abstract = True
 
-    def __str__(self):
-        """ Return string representation of model"""
-        return f'{self.lname},{self.fname}'
 
 
 class Employee(Person):
     """Database model for employees"""
     emp_id = models.AutoField(primary_key=True)
-    dept_id = models.ForeignKey(
-        Department,
+    comp_id = models.ForeignKey(
+        Company,
         on_delete = models.CASCADE,
+        null=True
+    )
+    emp_dept_id = models.ForeignKey(
+        EmpDepartment,
+        on_delete = models.CASCADE,
+        null=True,
+        blank=True
     )
     title = models.CharField(max_length=100)
-    hr_rt = models.DecimalField(max_digits=3,decimal_places=2)
+    hr_rt = models.DecimalField(max_digits=6,decimal_places=2)
     status = models.CharField(max_length=25)
 
     class Meta:
@@ -170,7 +218,7 @@ class Material(models.Model):
     description = models.TextField(default='none')
     total_price = models.DecimalField(max_digits=10,
                                     decimal_places=2)
-    total_quantity = models.DecimalField(max_digits=3,decimal_places=2)
+    total_quantity = models.DecimalField(max_digits=10,decimal_places=2)
     unit_measure = models.CharField(max_length=20,default='count')
     created_on = models.DateTimeField(auto_now_add=True)
     
@@ -190,28 +238,22 @@ class Material(models.Model):
 
 class Transaction(models.Model):
     """Database model for transactiona"""
-    trns_id = models.AutoField(primary_key=True)
     trns_cat_id = models.ForeignKey(
         TransCategory,
         on_delete = models.CASCADE,
-    )
-    prsn_id = models.ForeignKey(
-        Person,
-        on_delete = models.CASCADE,
+        
     )
     
     date = models.DateTimeField(auto_now_add=True)
 
-    amount = models.DecimalField(max_digits=3,decimal_places=2)
+    amount = models.DecimalField(max_digits=10,decimal_places=2)
     description = models.TextField(null=True,blank=True)
     
 
     class Meta:
-        ordering = ['date',]
+        abstract = True
 
-    def __str__(self):
-        """ Return string representation of model"""
-        return self.trns_id
+
 
 
 class Revenue(Transaction):
